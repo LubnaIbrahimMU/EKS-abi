@@ -2,6 +2,3 @@
 # defaults file for eks
 
     # Replace these with your actual AWS access key, secret key, and preferred region
-    # aws_access_key: AKIAZQ3DQK2FGQPNCNCC
-    # aws_secret_key: RX6DN0nVflKNfTi0Sh5VaubAdzafQ5ZHQJFWA0Nq
-    # aws_region: us-east-1
