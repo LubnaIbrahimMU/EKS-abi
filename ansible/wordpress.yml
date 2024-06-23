@@ -1,0 +1,147 @@
+---
+# - name: Deploy Kubernetes application
+#   hosts: localhost
+#   tasks:
+#     - name: Install kubectl
+#       become: yes
+#       yum:
+#         name: kubectl
+#         state: present
+
+#     - name: Configure kubeconfig
+#       command: >
+#         aws eks update-kubeconfig --name lu_cluster --region us-east-1
+
+#     - name: Deploy WordPress and MySQL
+#       become: yes
+#       k8s:
+#         namespace: default
+#         state: present
+#         definition: "{{ item }}"
+#       with_fileglob:
+#         - ../k8s/*.yaml
+
+
+
+# - name: Deploy Kubernetes application
+#   hosts: localhost
+#   tasks:
+#     - name: Install kubectl
+#       become: yes
+#       yum:
+#         name: kubectl
+#         state: present
+
+#     - name: Configure kubeconfig
+#       command: >
+#         aws eks update-kubeconfig --name lu_cluster --region us-east-1
+
+#     - name: Create ingress-nginx namespace
+#       become: yes
+#       k8s:
+#         api_version: v1
+#         kind: Namespace
+#         metadata:
+#           name: ingress-nginx
+
+#     - name: Deploy nginx to ingress-nginx namespace
+#       become: yes
+#       k8s:
+#         namespace: ingress-nginx
+#         state: present
+#         definition: "{{ lookup('file', '../k8s/nginx-ingress-controller.yaml') }}"
+
+#     - name: Deploy WordPress and MySQL
+#       become: yes
+#       k8s:
+#         namespace: default
+#         state: present
+#         definition: "{{ item }}"
+#       with_fileglob:
+#         - ../k8s/*.yaml
+#       when: "'../k8s/wordpress.yaml' in item or '../k8s/mysql.yaml' in item"
+
+
+
+
+# - name: Deploy Kubernetes application
+#   hosts: localhost
+#   tasks:
+#     - name: Install dependencies
+#       # become: yes
+#       apt:
+#         name: 
+#           - apt-transport-https
+#           - ca-certificates
+#           - curl
+#           - software-properties-common
+#         state: present
+#         update_cache: yes
+
+#     - name: Add Kubernetes apt key
+#       become: yes
+#       command: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+#     - name: Add Kubernetes apt repository
+#       become: yes
+#       apt_repository:
+#         repo: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+#         state: present
+
+#     - name: Install kubectl
+#       become: yes
+#       apt:
+#         name: kubectl
+#         state: present
+
+#     - name: Ensure AWS CLI is installed
+#       become: yes
+#       apt:
+#         name: awscli
+#         state: present
+
+#     - name: Configure kubeconfig
+#       command: >
+#         aws eks update-kubeconfig --name lu_cluster --region us-east-1
+
+#     - name: Create ingress-nginx namespace
+#       become: yes
+#       k8s:
+#         api_version: v1
+#         kind: Namespace
+#         metadata:
+#           name: ingress-nginx
+
+#     - name: Deploy nginx to ingress-nginx namespace
+#       become: yes
+#       k8s:
+#         namespace: ingress-nginx
+#         state: present
+#         definition: "{{ lookup('file', '../k8s/nginx-ingress-controller.yml') }}"
+
+#     - name: Deploy WordPress and MySQL
+#       become: yes
+#       k8s:
+#         namespace: default
+#         state: present
+#         definition: "{{ item }}"
+#       with_fileglob:
+#         - ../k8s/*.yml
+#       # when: "'wordpress.yaml' in item or 'mysql.yml' in item"
+
+
+
+
+
+
+- name: Deploy 
+  hosts: lu-ab
+  remote_user: ubuntu
+  become: yes
+  roles:
+   - eks
+  tags:
+    - k8s
+    - install
+
+

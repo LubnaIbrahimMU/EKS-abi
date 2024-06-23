@@ -1,0 +1,458 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-ingress-controller
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-ingress
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-ingress
+#     spec:
+#       containers:
+#       - name: nginx-ingress-controller
+#         image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:latest
+#         args:
+#           - /nginx-ingress-controller
+#           - --configmap=$(POD_NAMESPACE)/nginx-configuration
+#         env:
+#           - name: POD_NAME
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.name
+#           - name: POD_NAMESPACE
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.namespace
+#         ports:
+#         - containerPort: 80
+#         - containerPort: 443
+#         volumeMounts:               # Step 1: Add volume mount for SSL certificates
+#         - name: ssl-certs
+#           mountPath: /etc/nginx/ssl
+#       - name: certbot               # Step 2: Add Certbot container
+#         image: certbot/certbot
+#         command: ["certonly", "--webroot", "-w", "/var/www/certbot", "-d", "luwordpress.cloud-stacks.com"]
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /var/www/certbot
+#       volumes:                     # Step 1: Add volume for SSL certificates
+#       - name: ssl-certs
+#         emptyDir: {}
+
+
+
+##***
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-ingress-controller
+#   namespace: ingress-nginx
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-ingress
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-ingress
+#     spec:
+#       containers:
+#       - name: nginx-ingress-controller
+#         image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:latest
+#         args:
+#           - /nginx-ingress-controller
+#           - --configmap=$(POD_NAMESPACE)/nginx-configuration
+#         env:
+#           - name: POD_NAME
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.name
+#           - name: POD_NAMESPACE
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.namespace
+#         ports:
+#         - containerPort: 80
+#         - containerPort: 443
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /etc/nginx/ssl
+#         resources:
+#           requests:
+#             memory: "128Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "256Mi"
+#             cpu: "500m"
+#       - name: certbot
+#         image: certbot/certbot
+#         command: ["certonly", "--webroot", "-w", "/var/www/certbot", "-d", "luwordpress.cloud-stacks.com"]
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /var/www/certbot
+#         resources:
+#           requests:
+#             memory: "64Mi"
+#             cpu: "100m"
+#           limits:
+#             memory: "128Mi"
+#             cpu: "250m"
+#       volumes:
+#       - name: ssl-certs
+#         emptyDir: {}
+
+
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: nginx-ingress
+# spec:
+#   selector:
+#     app: nginx-ingress
+#   ports:
+#   - name: http
+#     port: 80
+#     targetPort: 80
+#   - name: https                 # Step 3: Optionally add SSL port if not present
+#     port: 443
+#     targetPort: 443
+#   type: LoadBalancer
+
+
+
+##################################################################################################################
+
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-ingress-controller
+#   namespace: ingress-nginx
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-ingress
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-ingress
+#     spec:
+#       containers:
+#       - name: nginx-ingress-controller
+#         image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:latest
+#         args:
+#           - /nginx-ingress-controller
+#           - --configmap=ingress-nginx/nginx-configuration
+#         env:
+#           - name: POD_NAME
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.name
+#           - name: POD_NAMESPACE
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.namespace
+#         ports:
+#         - containerPort: 80
+#         - containerPort: 443
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /etc/nginx/ssl
+#         resources:
+#           requests:
+#             memory: "128Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "256Mi"
+#             cpu: "500m"
+#         livenessProbe:
+#           httpGet:
+#             path: /healthz
+#             port: 10254
+#           initialDelaySeconds: 30
+#           timeoutSeconds: 5
+#         readinessProbe:
+#           httpGet:
+#             path: /healthz
+#             port: 10254
+#           initialDelaySeconds: 5
+#           timeoutSeconds: 1
+#       - name: certbot
+#         image: certbot/certbot
+#         command: ["certonly", "--webroot", "-w", "/var/www/certbot", "-d", "luwordpress.cloud-stacks.com"]
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /var/www/certbot
+#         resources:
+#           requests:
+#             memory: "64Mi"
+#             cpu: "100m"
+#           limits:
+#             memory: "128Mi"
+#             cpu: "250m"
+#       volumes:
+#       - name: ssl-certs
+#         emptyDir: {}
+
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: nginx-ingress
+#   namespace: ingress-nginx
+# spec:
+#   selector:
+#     app: nginx-ingress
+#   ports:
+#   - name: http
+#     port: 80
+#     targetPort: 80
+#   - name: https
+#     port: 443
+#     targetPort: 443
+#   type: LoadBalancer
+
+
+# ---
+
+
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-ingress-controller
+#   namespace:  nginx-ingress
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-ingress
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-ingress
+#     spec:
+#       containers:
+#       - name: nginx-ingress-controller
+#         image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:latest
+#         args:
+#         - /nginx-ingress-controller
+#         - --configmap=$(POD_NAMESPACE)/nginx-configuration
+#         - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+#         - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+#         - --publish-service=$(POD_NAMESPACE)/nginx-ingress-controller
+#         - --annotations-prefix=nginx.ingress.kubernetes.io
+#         env:
+#           - name: POD_NAME
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.name
+#           - name: POD_NAMESPACE
+#             valueFrom:
+#               fieldRef:
+#                 fieldPath: metadata.namespace
+#         ports:
+#         - containerPort: 80
+#         - containerPort: 443
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /etc/nginx/ssl
+#         resources:
+#           requests:
+#             memory: "128Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "256Mi"
+#             cpu: "500m"
+#         livenessProbe:
+#           httpGet:
+#             path: /healthz
+#             port: 10254
+#           initialDelaySeconds: 30
+#           timeoutSeconds: 5
+#         readinessProbe:
+#           httpGet:
+#             path: /healthz
+#             port: 10254
+#           initialDelaySeconds: 5
+#           timeoutSeconds: 1
+#       - name: certbot
+#         image: certbot/certbot
+#         command: ["certonly", "--webroot", "-w", "/var/www/certbot", "-d", "luwordpress.cloud-stacks.com"]
+#         volumeMounts:
+#         - name: ssl-certs
+#           mountPath: /var/www/certbot
+#         resources:
+#           requests:
+#             memory: "64Mi"
+#             cpu: "100m"
+#           limits:
+#             memory: "128Mi"
+#             cpu: "250m"
+#       volumes:
+#       - name: ssl-certs
+#         emptyDir: {}
+
+
+
+
+# ---
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-ingress-controller
+#   namespace: nginx-ingress
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-ingress
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-ingress
+#     spec:
+#       containers:
+#       - name: nginx-ingress
+#         image: nginx/nginx-ingress:3.5.2-ubi
+#         imagePullPolicy: IfNotPresent
+#         args:
+#         - /nginx-ingress-controller
+#         - --configmap=$(POD_NAMESPACE)/nginx-configuration
+#         - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+#         - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+#         - --publish-service=$(POD_NAMESPACE)/nginx-ingress-controller
+#         - --annotations-prefix=nginx.ingress.kubernetes.io
+#         env:
+#         - name: POD_NAME
+#           valueFrom:
+#             fieldRef:
+#               fieldPath: metadata.name
+#         - name: POD_NAMESPACE
+#           valueFrom:
+#             fieldRef:
+#               fieldPath: metadata.namespace
+#         ports:
+#         - name: http
+#           containerPort: 80
+#         - name: https
+#           containerPort: 443
+
+
+# ---
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: nginx-ingress-controller
+#   namespace: nginx-ingress
+# spec:
+#   type: LoadBalancer
+#   ports:
+#   - port: 80
+#     targetPort: 80
+#   - port: 443
+#     targetPort: 443
+#   selector:
+#     app: nginx-ingress
+
+
+
+
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: nginx-ingress-controller
+#   namespace: nginx-ingress
+# spec:
+#   type: LoadBalancer
+#   ports:
+#   - name: http
+#     port: 80
+#     targetPort: 80
+#   - name: https
+#     port: 443
+#     targetPort: 443
+#   selector:
+#     app: nginx-ingress
+
+
+
+---
+
+
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: nginxingress-lu
+#   namespace: nginx-ingress
+# spec:
+#   controller:
+#     image:
+#       pullPolicy: IfNotPresent
+#       repository: nginx/nginx-ingress
+#       tag: 3.5.2-ubi
+#     ingressClass:
+#       name: nginx
+#     kind: deployment
+#     nginxplus: false
+#     replicaCount: 1
+#     serviceAccount:
+#       imagePullSecretName: ""
+
+
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: nginxingress-lu
+#   namespace: nginx-ingress
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   rules:
+#   - host: "lupress.cloud-stacks.com"
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: my-service
+#             port:
+#               number: 80
+
+
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wordpress-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - luwordpress.cloud-stacks.com
+    secretName: wordpress-tls
+  rules:
+  - host: luwordpress.cloud-stacks.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wordpress
+            port:
+              number: 80

@@ -1,0 +1,154 @@
+---
+# tasks file for eks
+
+
+- name: Update apt package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install required packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-pip
+    - python3-venv
+    - unzip
+    - curl
+
+
+- name: apt-get update
+  apt: update_cache=yes
+
+- name: Install Python PIP
+  apt: pkg=python3-pip state=latest
+
+- name: Install boto via apt
+  apt: name=python3-boto3 state=latest
+
+
+
+- name: Download AWS CLI bundled installer
+  get_url:
+    url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+    dest: "/tmp/awscliv2.zip"
+
+- name: Unzip AWS CLI installer
+  unarchive:
+    src: "/tmp/awscliv2.zip"
+    dest: "/tmp"
+    remote_src: yes
+
+
+
+- name: Check if AWS CLI is already installed
+  command: /usr/local/bin/aws --version
+  register: aws_cli_installed
+  # ignore_errors: yes
+
+- name: Install or update AWS CLI
+  command: "/tmp/aws/install {{ '--update' if aws_cli_installed.rc == 0 else '' }}"
+  
+
+- name: AWS | Assures dir exists
+  file:
+    path: "/home/ubuntu/.aws"
+    state: directory
+
+- name: Verify AWS CLI installation
+  command: aws --version
+  register: aws_cli_version
+
+
+- name: AWS | create credentials
+  template:
+    src: aws_credentials.tpl
+    dest: "/home/ubuntu/.aws/credentials"
+- name: AWS | create config
+  template:
+    src: config.tpl
+    dest: "/home/ubuntu/.aws/config"
+
+
+
+- name: Install dependencies
+  apt:
+    name: 
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+    update_cache: yes
+
+- name: Add Kubernetes apt key
+  command: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+- name: Add Kubernetes apt repository
+  apt_repository:
+    repo: "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+    state: present
+
+- name: Install kubectl
+  apt:
+    name: kubectl
+    state: present
+
+
+
+
+# - name: Install EKS CTL
+#   command: >
+#     curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | \
+#     tar xz -C /tmp && \
+#     sudo mv /tmp/eksctl /usr/local/bin
+#   args:
+#     creates: /usr/local/bin/eksctl
+
+# - name: Verify EKS CTL installation
+#   command: eksctl version
+#   register: eksctl_version
+
+# - name: Ensure correct permissions for EKS CTL
+#   file:
+#     path: /usr/local/bin/eksctl
+#     mode: '0755'
+#   when: eksctl_version.stdout is not failed
+
+# - name: Secure AWS CLI and EKS CTL configuration files
+#   file:
+#     path: "{{ item }}"
+#     mode: '0600'
+#   with_items:
+#     - ~/.aws/credentials
+#     - ~/.aws/config
+
+
+
+
+
+- name: Configure kubeconfig
+  command: >
+    aws eks update-kubeconfig --name lu_cluster --region us-east-1
+
+- name: Create ingress-nginx namespace
+  k8s:
+    api_version: v1
+    kind: Namespace
+    metadata:
+      name: ingress-nginx
+
+- name: Deploy nginx to ingress-nginx namespace
+  k8s:
+    namespace: ingress-nginx
+    state: present
+    definition: "{{ lookup('file', '../k8s/nginx-ingress-controller.yml') }}"
+
+- name: Deploy WordPress and MySQL
+  k8s:
+    namespace: default
+    state: present
+    definition: "{{ item }}"
+  with_fileglob:
+    - ../k8s/*.yml
